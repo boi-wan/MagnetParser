@@ -1,32 +1,43 @@
 <!doctype html>
-<!--
- This page is shown when the extension button is clicked, because the
- "browser_action" field in manifest.json contains the "default_popup" key with
- value "popup.html".
- -->
-<html>
+<html lang="en">
   <head>
-    <title>Getting Started Extension's Popup</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MagnetParser</title>
     <link rel="stylesheet" type="text/css" href="popup.css">
-    <!--
-      - JavaScript and HTML must be in separate files: see our Content Security
-      - Policy documentation[1] for details and explanation.
-      -
-      - [1]: https://developer.chrome.com/extensions/contentSecurityPolicy
-    -->
-    <script src="popup.js"></script>
   </head>
-
   <body>
-    <h3>Magnet Parser</h3>
-    <div id="buttonContainer" class="container">
-      <button type="button" id="buttonExtract">Extract</button>
-      <button type="button" id="buttonCopyToClip">Copy To ClipBoard</button>
-      <span id="copiedMessageText">Copied</span>
+    <header class="header">
+      <div class="brand">
+        <img src="icons/icon-48.png" alt="MagnetParser Logo" class="brand-icon">
+        <h1 class="brand-title">MagnetParser</h1>
+      </div>
+      <span id="badgeCount" class="badge">0 links</span>
+    </header>
+
+    <div class="actions">
+      <button type="button" id="buttonExtract" class="btn btn-secondary" title="Re-scan the current tab">
+        Extract
+      </button>
+      <button type="button" id="buttonCopyToClip" class="btn btn-primary" title="Copy extracted links to clipboard">
+        Copy All
+      </button>
+      <button type="button" id="buttonClear" class="btn btn-secondary" title="Clear text area">
+        Clear
+      </button>
     </div>
-    <div id="textContainer" class="container">
-	    <h2>Extracted Magnet URLs</h2>
-      <textarea id="magnetContainer" rows="25" cols="75" onchange=""></textarea>
-    </div>
+
+    <div id="statusMessage" class="status-message" aria-live="polite"></div>
+
+    <main class="content">
+      <textarea
+        id="magnetContainer"
+        rows="14"
+        spellcheck="false"
+        placeholder="Extracted magnet links will appear here..."
+      ></textarea>
+    </main>
+
+    <script src="popup.js"></script>
   </body>
 </html>
