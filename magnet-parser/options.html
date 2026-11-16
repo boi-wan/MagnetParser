@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MagnetParser - Options</title>
+    <link rel="stylesheet" type="text/css" href="options.css">
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <div class="brand">
+          <img src="icons/icon-48.png" alt="MagnetParser Logo" class="brand-icon">
+          <div>
+            <h1 class="brand-title">MagnetParser</h1>
+            <p class="brand-subtitle">Extension Configuration &amp; qBittorrent Integration</p>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="card">
+          <h2 class="card-title">qBittorrent Connection</h2>
+          <p class="card-description">
+            Configure your qBittorrent WebUI instance to enable direct one-click torrent downloading from the extension popup.
+          </p>
+
+          <form id="optionsForm" class="options-form" novalidate>
+            <div class="form-group">
+              <label for="inputServerUrl">Server URL</label>
+              <input
+                type="url"
+                id="inputServerUrl"
+                class="form-control"
+                placeholder="http://localhost:8080"
+                autocomplete="url"
+                spellcheck="false"
+                required
+              >
+              <span class="form-hint">
+                The address where qBittorrent WebUI is running (e.g. <code>http://localhost:8080</code> or <code>http://192.168.1.100:8080</code>).
+              </span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group flex-1">
+                <label for="inputUsername">Username</label>
+                <input
+                  type="text"
+                  id="inputUsername"
+                  class="form-control"
+                  placeholder="admin"
+                  autocomplete="username"
+                  spellcheck="false"
+                >
+              </div>
+              <div class="form-group flex-1">
+                <label for="inputPassword">Password</label>
+                <div class="password-wrapper">
+                  <input
+                    type="password"
+                    id="inputPassword"
+                    class="form-control"
+                    placeholder="••••••••"
+                    autocomplete="current-password"
+                    spellcheck="false"
+                  >
+                  <button type="button" id="buttonTogglePassword" class="btn-toggle-pw" title="Toggle password visibility">
+                    👁
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="inputTags">Tags (optional)</label>
+              <input
+                type="text"
+                id="inputTags"
+                class="form-control"
+                placeholder="MagnetParser"
+                spellcheck="false"
+              >
+              <span class="form-hint">
+                Comma-separated tags attached to sent torrents in qBittorrent (e.g. <code>MagnetParser, web</code>).
+              </span>
+            </div>
+
+            <div class="form-group checkbox-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="checkboxStartPaused">
+                <span>Add torrents in paused state</span>
+              </label>
+            </div>
+
+            <div id="optionsStatusMessage" class="status-message" aria-live="polite"></div>
+
+            <div class="options-actions">
+              <button type="button" id="buttonTestConnection" class="btn btn-secondary">
+                Test Connection
+              </button>
+              <button type="submit" id="buttonSaveSettings" class="btn btn-primary">
+                Save Settings
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card info-card">
+          <h2 class="card-title">qBittorrent Setup Guide</h2>
+          <ol class="guide-list">
+            <li>
+              <strong>Enable WebUI</strong>: In qBittorrent, open <strong>Tools &gt; Options &gt; Web UI</strong> and check <em>"Web User Interface (Remote control)"</em>.
+            </li>
+            <li>
+              <strong>Set Port &amp; Credentials</strong>: Choose an IP address / port (default is <code>8080</code>) and set your WebUI username and password.
+            </li>
+            <li>
+              <strong>Automatic Header Spoofing</strong>: MagnetParser uses Chrome's <code>declarativeNetRequest</code> API to seamlessly match the origin and referer of your qBittorrent host, avoiding cross-site request blocks without needing to modify qBittorrent configuration files.
+            </li>
+          </ol>
+        </div>
+      </main>
+    </div>
+
+    <script src="qbittorrent.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

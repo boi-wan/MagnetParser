@@ -25,18 +25,53 @@ function pageExtractMagnetLinks() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Main view elements
   const btnExtract = document.getElementById('buttonExtract');
   const btnCopy = document.getElementById('buttonCopyToClip');
+  const btnSendQbit = document.getElementById('buttonSendQbit');
   const btnClear = document.getElementById('buttonClear');
   const textArea = document.getElementById('magnetContainer');
   const badgeCount = document.getElementById('badgeCount');
   const statusMessage = document.getElementById('statusMessage');
 
+  // Navigation & Views
+  const btnSettings = document.getElementById('buttonSettings');
+  const btnBackToMain = document.getElementById('buttonBackToMain');
+  const mainView = document.getElementById('mainView');
+  const settingsView = document.getElementById('settingsView');
+
+  // Settings form elements
+  const settingsForm = document.getElementById('settingsForm');
+  const inputServerUrl = document.getElementById('inputServerUrl');
+  const inputUsername = document.getElementById('inputUsername');
+  const inputPassword = document.getElementById('inputPassword');
+  const inputTags = document.getElementById('inputTags');
+  const checkboxStartPaused = document.getElementById('checkboxStartPaused');
+  const btnTogglePassword = document.getElementById('buttonTogglePassword');
+  const btnTestConnection = document.getElementById('buttonTestConnection');
+  const btnSaveSettings = document.getElementById('buttonSaveSettings');
+  const settingsStatusMessage = document.getElementById('settingsStatusMessage');
+
   let copyTimeoutId = null;
+  let sendTimeoutId = null;
 
   function setStatus(text, type = '') {
     statusMessage.textContent = text;
     statusMessage.className = `status-message ${type}`.trim();
+  }
+
+  function setSettingsStatus(text, type = '') {
+    settingsStatusMessage.textContent = text;
+    settingsStatusMessage.className = `status-message ${type}`.trim();
+  }
+
+  function getMagnetLinks() {
+    const rawText = textArea.value.trim();
+    if (!rawText) return [];
+    return rawText
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l.toLowerCase().startsWith('magnet:'));
   }
 
   function updateBadgeAndButtons() {
@@ -45,7 +80,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
       : [];
 
+    const magnetLinks = getMagnetLinks();
     const count = links.length;
+
     badgeCount.textContent = `${count} link${count === 1 ? '' : 's'}`;
     if (count > 0) {
       badgeCount.classList.add('has-links');
@@ -54,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnCopy.disabled = (count === 0);
+    btnSendQbit.disabled = (magnetLinks.length === 0);
     btnClear.disabled = (textArea.value.length === 0);
   }
 
@@ -176,6 +214,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  async function sendToQBittorrent() {
+    const magnetLinks = getMagnetLinks();
+    if (magnetLinks.length === 0) {
+      setStatus('No valid magnet links found to send.', 'error');
+      return;
+    }
+
+    const settings = await QBitService.loadSettings();
+    if (!settings.serverUrl) {
+      setStatus('qBittorrent is not configured. Opening Settings...', 'error');
+      showSettingsView();
+      inputServerUrl.focus();
+      return;
+    }
+
+    const originalText = 'Send to qBittorrent';
+    btnSendQbit.textContent = 'Sending...';
+    btnSendQbit.disabled = true;
+    setStatus(`Sending ${magnetLinks.length} magnet link${magnetLinks.length === 1 ? '' : 's'} to qBittorrent...`, '');
+
+    try {
+      const result = await QBitService.sendTorrentsToQBit(magnetLinks, settings);
+
+      if (result.success) {
+        btnSendQbit.textContent = '✓ Sent!';
+        setStatus(`Successfully sent ${magnetLinks.length} link${magnetLinks.length === 1 ? '' : 's'} to qBittorrent!`, 'success');
+
+        if (sendTimeoutId) clearTimeout(sendTimeoutId);
+        sendTimeoutId = setTimeout(() => {
+          btnSendQbit.textContent = originalText;
+          updateBadgeAndButtons();
+        }, 2000);
+      } else {
+        btnSendQbit.textContent = originalText;
+        btnSendQbit.disabled = false;
+        setStatus(`qBittorrent error: ${result.error}`, 'error');
+
+        if (result.needsConfig) {
+          showSettingsView();
+          inputServerUrl.focus();
+        }
+      }
+    } catch (err) {
+      btnSendQbit.textContent = originalText;
+      btnSendQbit.disabled = false;
+      setStatus(`Failed to send to qBittorrent: ${err.message}`, 'error');
+    }
+  }
+
   function clearAll() {
     textArea.value = '';
     setStatus('Cleared.', '');
@@ -183,13 +270,120 @@ document.addEventListener('DOMContentLoaded', () => {
     textArea.focus();
   }
 
-  // Event Listeners
+  // Views & Settings Management
+  async function loadSettingsIntoForm() {
+    const settings = await QBitService.loadSettings();
+    inputServerUrl.value = settings.serverUrl || '';
+    inputUsername.value = settings.username || '';
+    inputPassword.value = settings.password || '';
+    inputTags.value = settings.tags || '';
+    checkboxStartPaused.checked = Boolean(settings.startPaused);
+  }
+
+  async function showSettingsView() {
+    mainView.classList.add('hidden');
+    settingsView.classList.remove('hidden');
+    setSettingsStatus('');
+    await loadSettingsIntoForm();
+  }
+
+  function showMainView() {
+    settingsView.classList.add('hidden');
+    mainView.classList.remove('hidden');
+    updateBadgeAndButtons();
+  }
+
+  // Event Listeners - Main View
   btnExtract.addEventListener('click', extractFromPage);
   btnCopy.addEventListener('click', copyToClipboard);
+  btnSendQbit.addEventListener('click', sendToQBittorrent);
   btnClear.addEventListener('click', clearAll);
+
+  btnSettings.addEventListener('click', () => {
+    if (settingsView.classList.contains('hidden')) {
+      showSettingsView();
+    } else {
+      showMainView();
+    }
+  });
+
+  btnBackToMain.addEventListener('click', showMainView);
 
   textArea.addEventListener('input', updateBadgeAndButtons);
   textArea.addEventListener('change', updateBadgeAndButtons);
+
+  // Event Listeners - Settings Form
+  btnTogglePassword.addEventListener('click', () => {
+    if (inputPassword.type === 'password') {
+      inputPassword.type = 'text';
+      btnTogglePassword.textContent = '🔒';
+      btnTogglePassword.title = 'Hide password';
+    } else {
+      inputPassword.type = 'password';
+      btnTogglePassword.textContent = '👁';
+      btnTogglePassword.title = 'Show password';
+    }
+  });
+
+  btnTestConnection.addEventListener('click', async () => {
+    const serverUrl = inputServerUrl.value.trim();
+    if (!serverUrl) {
+      setSettingsStatus('Please enter a server URL to test.', 'error');
+      inputServerUrl.focus();
+      return;
+    }
+
+    setSettingsStatus('Testing connection...', '');
+    btnTestConnection.disabled = true;
+
+    try {
+      const result = await QBitService.testQBitConnection({
+        serverUrl,
+        username: inputUsername.value,
+        password: inputPassword.value
+      });
+
+      if (result.success) {
+        const ver = result.version ? ` (${result.version})` : '';
+        setSettingsStatus(`✓ Connected successfully!${ver}`, 'success');
+      } else {
+        setSettingsStatus(`✗ ${result.error}`, 'error');
+      }
+    } catch (err) {
+      setSettingsStatus(`✗ Connection failed: ${err.message}`, 'error');
+    } finally {
+      btnTestConnection.disabled = false;
+    }
+  });
+
+  settingsForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const rawUrl = inputServerUrl.value.trim();
+    if (!rawUrl) {
+      setSettingsStatus('Server URL cannot be empty.', 'error');
+      inputServerUrl.focus();
+      return;
+    }
+
+    btnSaveSettings.disabled = true;
+    setSettingsStatus('Saving settings...', '');
+
+    try {
+      await QBitService.saveSettings({
+        serverUrl: rawUrl,
+        username: inputUsername.value,
+        password: inputPassword.value,
+        tags: inputTags.value,
+        startPaused: checkboxStartPaused.checked
+      });
+
+      setSettingsStatus('✓ Settings saved successfully!', 'success');
+    } catch (err) {
+      setSettingsStatus(`Failed to save settings: ${err.message}`, 'error');
+    } finally {
+      btnSaveSettings.disabled = false;
+    }
+  });
 
   // Initialize
   updateBadgeAndButtons();

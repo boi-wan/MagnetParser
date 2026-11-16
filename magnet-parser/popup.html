@@ -12,32 +12,131 @@
         <img src="icons/icon-48.png" alt="MagnetParser Logo" class="brand-icon">
         <h1 class="brand-title">MagnetParser</h1>
       </div>
-      <span id="badgeCount" class="badge">0 links</span>
+      <div class="header-right">
+        <span id="badgeCount" class="badge">0 links</span>
+        <button type="button" id="buttonSettings" class="btn-icon" title="qBittorrent Settings" aria-label="Settings">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
     </header>
 
-    <div class="actions">
-      <button type="button" id="buttonExtract" class="btn btn-secondary" title="Re-scan the current tab">
-        Extract
-      </button>
-      <button type="button" id="buttonCopyToClip" class="btn btn-primary" title="Copy extracted links to clipboard">
-        Copy All
-      </button>
-      <button type="button" id="buttonClear" class="btn btn-secondary" title="Clear text area">
-        Clear
-      </button>
+    <div id="mainView" class="view-container">
+      <div class="actions">
+        <button type="button" id="buttonExtract" class="btn btn-secondary" title="Re-scan the current tab">
+          Extract
+        </button>
+        <button type="button" id="buttonCopyToClip" class="btn btn-primary" title="Copy extracted links to clipboard">
+          Copy All
+        </button>
+        <button type="button" id="buttonSendQbit" class="btn btn-qbit" title="Send extracted links to qBittorrent" disabled>
+          Send to qBittorrent
+        </button>
+        <button type="button" id="buttonClear" class="btn btn-secondary" title="Clear text area">
+          Clear
+        </button>
+      </div>
+
+      <div id="statusMessage" class="status-message" aria-live="polite"></div>
+
+      <main class="content">
+        <textarea
+          id="magnetContainer"
+          rows="14"
+          spellcheck="false"
+          placeholder="Extracted magnet links will appear here..."
+        ></textarea>
+      </main>
     </div>
 
-    <div id="statusMessage" class="status-message" aria-live="polite"></div>
+    <div id="settingsView" class="view-container hidden">
+      <div class="settings-header">
+        <button type="button" id="buttonBackToMain" class="btn btn-secondary btn-sm" title="Back to extractor">
+          ← Back
+        </button>
+        <h2 class="settings-title">qBittorrent Settings</h2>
+      </div>
 
-    <main class="content">
-      <textarea
-        id="magnetContainer"
-        rows="14"
-        spellcheck="false"
-        placeholder="Extracted magnet links will appear here..."
-      ></textarea>
-    </main>
+      <form id="settingsForm" class="settings-form" novalidate>
+        <div class="form-group">
+          <label for="inputServerUrl">Server URL</label>
+          <input
+            type="url"
+            id="inputServerUrl"
+            class="form-control"
+            placeholder="http://localhost:8080"
+            autocomplete="url"
+            spellcheck="false"
+            required
+          >
+          <span class="form-hint">e.g. http://localhost:8080 or http://192.168.1.50:8080</span>
+        </div>
 
+        <div class="form-row">
+          <div class="form-group flex-1">
+            <label for="inputUsername">Username</label>
+            <input
+              type="text"
+              id="inputUsername"
+              class="form-control"
+              placeholder="admin"
+              autocomplete="username"
+              spellcheck="false"
+            >
+          </div>
+          <div class="form-group flex-1">
+            <label for="inputPassword">Password</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="inputPassword"
+                class="form-control"
+                placeholder="••••••••"
+                autocomplete="current-password"
+                spellcheck="false"
+              >
+              <button type="button" id="buttonTogglePassword" class="btn-toggle-pw" title="Show or hide password" aria-label="Toggle password visibility">
+                👁
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="inputTags">Tags (optional)</label>
+          <input
+            type="text"
+            id="inputTags"
+            class="form-control"
+            placeholder="MagnetParser"
+            spellcheck="false"
+          >
+          <span class="form-hint">Comma-separated tags added to sent torrents</span>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="checkboxStartPaused">
+            <span>Add torrents in paused state</span>
+          </label>
+        </div>
+
+        <div id="settingsStatusMessage" class="status-message" aria-live="polite"></div>
+
+        <div class="settings-actions">
+          <button type="button" id="buttonTestConnection" class="btn btn-secondary">
+            Test Connection
+          </button>
+          <button type="submit" id="buttonSaveSettings" class="btn btn-primary">
+            Save Settings
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <script src="qbittorrent.js"></script>
     <script src="popup.js"></script>
   </body>
 </html>
